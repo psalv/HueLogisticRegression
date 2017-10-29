@@ -19,4 +19,8 @@ recall = true_positive / actual_positive;
 
 f = 2 * ( (precision * recall) / (precision + recall) );
 
+fprintf('Precision: %d\n', precision);
+fprintf('Recall: %d\n', recall);
+fprintf('F1 Score: %d\n', f);
+
 end
