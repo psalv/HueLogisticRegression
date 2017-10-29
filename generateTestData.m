@@ -9,7 +9,7 @@ end
 
 x = [x1 x2];
 x = [x; x; x; x; x; x; x; x; x; x];
-x = [x; x; x];
+
 random = rand(size(x), 1) * 2;
 r = random >= 0.5;
 data = [x r];
