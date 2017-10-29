@@ -1,4 +1,4 @@
-function f = fscore(predicted_y, actual_y)
+function [f, precision, recall] = fscore(predicted_y, actual_y)
 
 f = 0;
 
@@ -25,9 +25,5 @@ endif
 
 
 f = 2 * ( (precision * recall) / (precision + recall) );
-
-%fprintf('Precision: %d\n', precision);
-%fprintf('Recall: %d\n', recall);
-%fprintf('F1 Score: %d\n', f);
 
 end
