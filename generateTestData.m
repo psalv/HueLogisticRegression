@@ -20,8 +20,8 @@ y(two) = 1;
 x = [x; x; x; x; x; x; x; x; x; x];
 y = [y; y; y; y; y; y; y; y; y; y];
 
-x = [x; x; x; x; x; x; x; x; x];
-y = [y; y; y; y; y; y; y; y; y];
+x = [x; x];
+y = [y; y];
 
 
 %random = zeros(size(x), 1);
