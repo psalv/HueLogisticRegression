@@ -14,13 +14,20 @@ end
 pred_positive = sum(predicted_y);
 actual_positive = sum(actual_y);
 
-precision = true_positive / pred_positive;
 recall = true_positive / actual_positive;
+
+if pred_positive == 0
+  precision = 0;
+  recall = 1;
+else
+  precision = true_positive / pred_positive;
+endif
+
 
 f = 2 * ( (precision * recall) / (precision + recall) );
 
-fprintf('Precision: %d\n', precision);
-fprintf('Recall: %d\n', recall);
-fprintf('F1 Score: %d\n', f);
+%fprintf('Precision: %d\n', precision);
+%fprintf('Recall: %d\n', recall);
+%fprintf('F1 Score: %d\n', f);
 
 end
