@@ -4,28 +4,41 @@
 #define LAMBDA 1
 #define THRESHOLD 0.6
 #define DEGREE 5
+#define MAPPED_NUM 21
+
+/*
+TODO:
+
+-Break up training data into training and CV
+-train with training
+-predict cv
+-ompute the F score
+*/
 
 
-// So what is happening is each row of x1 and x2 orresponding to a single training example and the row
-// is extended to include each of the items in the for loop.
 
-// n = 21, doesn't have to be completely extensible
-// m x 21 matrix.
-
-// out(:, end+1) = (X1.^(i-j)).*(X2.^j);
+/*
+out = ones(size(X1(:,1)));
+for i = 1:degree
+    for j = 0:i
+        out(:, end+1) = ( X1 .^ (i-j) ) .* (X2.^j);
+    end
+end
+*/
 
 
 // TODO !!! COMPLETE THIS FUNCTION
 arma::mat mapFeature(arma::mat X1, arma::mat X2){
-    arma::mat out(size(X1, 0), 21);
+    arma::mat out(size(X1, 0), MAPPED_NUM);
 
-    int q = 0;
-    for(int i = 0; i < DEGREE; i++){
-        for(int j = 0; j < i; j++){
-//            out() = pow( pow(X1, i-j), j);
-            std::cout << arma::size(pow( pow(X1, i-j), j)) << "\n";
+    int column = 0;
+    for(int i = 0; i <= DEGREE; i++){
+        for(int j = 0; j <= i; j++){
+            out.col(column++) = ( pow(X1, i-j) % pow(X2, j) );
         }
     }
+
+
     return out;
 }
 
@@ -93,8 +106,11 @@ arma::mat normalEquation(arma::mat *X, arma::mat *y){
 
 // TODO !!! REWRITE TO READ AND FORMAT FROM DATABASE
 arma::mat generateLightMatrix(int lightId){
+    // vector<vector<int>> lightData = getLightData();
+
+
     arma::mat data;
-    data.load("testData.txt");
+    data.load("../testData.txt");
     return data;
 }
 
@@ -102,7 +118,7 @@ arma::mat generateWeekOfX(){
     arma::mat x_predict(7, 24*7);
     int pos = 0;
     for(int day = 1; day < 8; day++){
-        for(int hour = 0; hour < 23; hour++) {
+        for(int hour = 0; hour < 24; hour++) {
             x_predict(pos, 0) = day;
             x_predict(pos, 1) = hour;
         }
@@ -131,8 +147,17 @@ arma::mat trainAndPredict(int lightId){
 
 int main(int argc, const char **argv) {
 
-    arma::mat predictions = trainAndPredict(0);
-    std::cout << predictions.row(0) << "\n";
+    // arma::mat predictions = trainAndPredict(0);
+    arma::mat x1(10, 1);
+    arma::mat x2(10, 1);
+    for(int i = 1; i < 11; i++){
+        x1(i - 1, 0) = i;
+        x2(i - 1, 0) = i + 10;
+    }
+
+    arma::mat mapped = mapFeature(x1, x2);
+    std::cout << arma::size(mapped) << "\n";
+    std::cout << mapped.row(0) << "\n";
 
     return 0;
 }

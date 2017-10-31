@@ -71,6 +71,7 @@ X = data(:, [1, 2]); y = data(:, 3);
 
 oldX = X;
 X = mapFeature(X(:,1), X(:,2), 5);
+X(1, :)
 
 m = size(y)(1);
 
@@ -115,15 +116,15 @@ y_test = y([floor(m * 0.8):end], :);
 
 %%% ========== PLOTTING THE LEARNING CURVE ========== %%%
 
-[error_train, error_val] = learningCurve(x_train, y_train, x_val, y_val, lambda, threshold);
+%[error_train, error_val] = learningCurve(x_train, y_train, x_val, y_val, lambda, threshold);
 
-figure(1);
-plot(1:size(x_train)(1), error_train, 1:size(x_train)(1), error_val);
-title('Learning curve for logistic regression')
-legend('Train', 'Cross Validation')
-xlabel('Number of training examples')
-ylabel('Error')
-axis([0 size(x_train)(1) 0 1])
+%figure(1);
+%plot(1:size(x_train)(1), error_train, 1:size(x_train)(1), error_val);
+%title('Learning curve for logistic regression')
+%legend('Train', 'Cross Validation')
+%xlabel('Number of training examples')
+%ylabel('Error')
+%axis([0 size(x_train)(1) 0 1])
 
 
 
