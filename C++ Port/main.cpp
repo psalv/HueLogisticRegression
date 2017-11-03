@@ -4,12 +4,17 @@
 
 #define LAMBDA 1
 #define THRESHOLD 0.6
-#define CERTAINTY_THRESHOLD 0.6
+#define CERTAINTY_THRESHOLD 0.7
 #define DEGREE 5
 #define MAPPED_NUM 21
 
 
-
+/**
+ *
+ * @param X1: m x 1 vector where m is number of training examples (first feature column)
+ * @param X2: m x 1 vector where m is number of training examples (second feature column)
+ * @return a vector of size m x 21 representing polynomial mapped features X1 and X2
+ */
 arma::mat mapFeature(arma::mat X1, arma::mat X2){
     arma::mat out(size(X1, 0), MAPPED_NUM);
 
@@ -95,6 +100,10 @@ arma::mat generateLightMatrix(int lightId){
     return data;
 }
 
+/**
+ *
+ * @return a matrix representing a week of x values for oru scheduling prediction algorithm
+ */
 arma::mat generateWeekOfX(){
     arma::mat x_predict(7, 24*7);
     int pos = 0;
@@ -108,6 +117,27 @@ arma::mat generateWeekOfX(){
 }
 
 
+arma::mat predictByFrequency(arma::mat *data){
+	arma::mat positive = arma::zeros(24 * 7, 1);
+	arma::mat negative = arma::zeros(24 * 7, 1);
+	arma::mat prediction = arma::zeros(24 * 7, 1);
+	
+	for(int i = 0; i < arma::size(*data, 0); i++){
+		if((*data).at(i, 2) == 1){
+			positive.at((((*data).at(i, 0)) - 1) * 24 + (*data).at(i, 1), 0) += 1;
+		} else {
+			negative.at((((*data).at(i, 0)) - 1) * 24 + (*data).at(i, 1), 0) += 1;
+		}
+	}
+
+	for(int i = 0; i < 24 * 7; i++){
+		if(positive.at(i, 0) >  negative.at(i, 0)){
+			prediction.at(i, 0) = 1;
+		}
+	}
+
+	return prediction;
+}
 
 /**
  *
@@ -118,9 +148,12 @@ arma::mat trainAndPredict(int lightId, int machineLearning){
 
 	// Data does not need to be randomized since we are using all of it
     arma::mat data = generateLightMatrix(lightId);
-	arma::mat x_predict = generateWeekOfX();
 
+	// We predict using logistic regression dependant on our confidence in our predictions
     if(machineLearning){
+
+		arma::mat x_predict = generateWeekOfX();
+
     	// train and predict and then schedule
    		arma::mat y = data.col(2);
     	arma::mat X = mapFeature(data.col(0), data.col(1));
@@ -129,20 +162,23 @@ arma::mat trainAndPredict(int lightId, int machineLearning){
 
    		return predict(&theta, &x_predict);
     } else {
+
     	// predict based on most frequent for that day
-    	// arma::mat = 
-
-    	return x_predict;
+    	return predictByFrequency(&data); 
     }
-
-
 }
 
-
+/**
+ *
+ * @param the id of the light that we are checking the confidence for
+ * @return an integer 1 or 0, respectively representing if our f score surpasses our confidence threshold
+ */
 double fscore(arma::mat *y_predicted, arma::mat *y_test){
 	double true_postive = 0;
 	double pred_positive = 0;
 	double actual_positive = 0;
+	
+	// Counting the number of true, predicted, and actual positive values
 	for(int i = 0; i < arma::size((*y_predicted), 0); i++){
 		if((*y_predicted).at(i, 0) == 1){
 			if((*y_test).at(i, 0) == 1){
@@ -155,6 +191,7 @@ double fscore(arma::mat *y_predicted, arma::mat *y_test){
 		}
 	}
 
+	// Returning lowest possible f score to avoid dividing by 0 error
 	if(actual_positive == 0 || true_postive == 0){
 		return 0;
 	}
@@ -162,9 +199,15 @@ double fscore(arma::mat *y_predicted, arma::mat *y_test){
 	double recall = true_postive / actual_positive;
 	double precision = true_postive / pred_positive;
 
+	// F score calculation
 	return 2 * ( (precision * recall) / (precision + recall) );
 }
 
+/**
+ *
+ * @param the id of the light that we are checking the confidence for
+ * @return an integer 1 or 0, respectively representing if our f score surpasses our confidence threshold
+ */
 int checkConfidence(int lightId){
 
 	arma::mat data = generateLightMatrix(lightId);
@@ -194,9 +237,7 @@ int checkConfidence(int lightId){
 
 int main(int argc, const char **argv) {
 
-
-    int checked = checkConfidence(1);
-
-
+    // trainAndPredict(1, 0);
+    // std::cout << trainAndPredict(1, 0) <<"\n";
     return 0;
 }
