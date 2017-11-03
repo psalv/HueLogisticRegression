@@ -8,8 +8,8 @@
 #define DEGREE 5
 #define MAPPED_NUM 21
 
-
 /**
+ * Maps the features X1 and X2 polynomially for more complex fitting.
  *
  * @param X1: m x 1 vector where m is number of training examples (first feature column)
  * @param X2: m x 1 vector where m is number of training examples (second feature column)
@@ -28,8 +28,8 @@ arma::mat mapFeature(arma::mat X1, arma::mat X2){
     return out;
 }
 
-
 /**
+ * Computes the sigmoid value of each training example in X parameterized with theta
  *
  * @param theta: (n + 1) x 1 vector
  * @param X: m x (n+1) vector where m is number of training examples and n is the number of features
@@ -50,6 +50,7 @@ arma::mat sigmoid(arma::mat *theta, arma::mat *X, unsigned long m){
 
 
 /**
+ * Makes a prediction based on the sigmoid values for a weeks worth of x points.
  *
  * @param theta: (n + 1) x 1 vector
  * @param X: m x (n+1) vector where m is number of predictions to make and n is the number of features
@@ -73,6 +74,7 @@ arma::mat predict(arma::mat *theta, arma::mat *X){
 
 
 /**
+ * Computes the theta values for the matrix using the normal equation.
  *
  * @param X: m x (n+1) matrix, where m is number of training examples and n is the number of features
  * @param y: m x 1 vector
@@ -90,17 +92,24 @@ arma::mat normalEquation(arma::mat *X, arma::mat *y){
 }
 
 
-// TODO !!! REWRITE TO READ AND FORMAT FROM DATABASE
+/**
+ * Builds and returns a matrix representing the state information for a particular light.
+ *
+ * @param lightId: the id of the light for which we are getting all state information for
+ * @return an matrix representation where the rows represent each data point, col1: day, col2: hour, col3: state (1 = on, 0 = off)
+ */
 arma::mat generateLightMatrix(int lightId){
     // vector<vector<int>> lightData = getLightData();
 
 
+	// TODO !!! Using stub data while the database and api calls are being developed.
     arma::mat data;
     data.load("../testData.txt");
     return data;
 }
 
 /**
+ * Builds a matrix of x parameters to be used for predicting the next week of state shceduling.
  *
  * @return a matrix representing a week of x values for oru scheduling prediction algorithm
  */
@@ -117,6 +126,13 @@ arma::mat generateWeekOfX(){
 }
 
 
+/*
+ * Predicts a weeks worth of scheduling based ont he most frequent past states for each time.
+ * To be used when the logisitic regression algorithm is not confident enough.
+ *
+ * @param data: the matrix representation of the state data for the light which we want to predict
+ * @return a matrix representing a week of scheduling
+ */
 arma::mat predictByFrequency(arma::mat *data){
 	arma::mat positive = arma::zeros(24 * 7, 1);
 	arma::mat negative = arma::zeros(24 * 7, 1);
@@ -140,6 +156,7 @@ arma::mat predictByFrequency(arma::mat *data){
 }
 
 /**
+ * Decides which prediction algorithm to use and exeutes the prediction.
  *
  * @param lightId the id of a light to collect all data for, train theta, and predict a weeks worth of scheduling
  * @return a matrix representing a week of scheduling
@@ -169,6 +186,7 @@ arma::mat trainAndPredict(int lightId, int machineLearning){
 }
 
 /**
+ * Computes the F score for the test data to determine accuracy.
  *
  * @param the id of the light that we are checking the confidence for
  * @return an integer 1 or 0, respectively representing if our f score surpasses our confidence threshold
@@ -204,6 +222,8 @@ double fscore(arma::mat *y_predicted, arma::mat *y_test){
 }
 
 /**
+ * Splits a lights data into a training and test set to compute the accuracy of our
+ * training algorithm with the available data.
  *
  * @param the id of the light that we are checking the confidence for
  * @return an integer 1 or 0, respectively representing if our f score surpasses our confidence threshold
@@ -234,10 +254,3 @@ int checkConfidence(int lightId){
     return fscore(&predicted, &y_test) > CERTAINTY_THRESHOLD;
 }
 
-
-int main(int argc, const char **argv) {
-
-    // trainAndPredict(1, 0);
-    // std::cout << trainAndPredict(1, 0) <<"\n";
-    return 0;
-}
