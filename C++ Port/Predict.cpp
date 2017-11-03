@@ -8,7 +8,8 @@
  * class will opt to use a most-frequent algorithm to decide scheduling.
  */
 
-#include "predict.h"
+#include "Predict.h"
+
 
 /**
  * Predict constructor.
@@ -18,6 +19,7 @@ Predict::Predict(){
     return;
 }
 
+
 /**
  * Predict deconstructor.
  * There are no class variables to destroy for this class so the deconstructor does nothing.
@@ -25,6 +27,7 @@ Predict::Predict(){
 Predict::~Predict(){
     return;
 }
+
 
 /**
  * Maps the features X1 and X2 polynomially for more complex fitting.
