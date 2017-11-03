@@ -1,33 +1,15 @@
 #include <iostream>
 #include <armadillo>
+#include <stdlib.h>
 
 #define LAMBDA 1
 #define THRESHOLD 0.6
+#define CERTAINTY_THRESHOLD 0.6
 #define DEGREE 5
 #define MAPPED_NUM 21
 
-/*
-TODO:
-
--Break up training data into training and CV
--train with training
--predict cv
--ompute the F score
-*/
 
 
-
-/*
-out = ones(size(X1(:,1)));
-for i = 1:degree
-    for j = 0:i
-        out(:, end+1) = ( X1 .^ (i-j) ) .* (X2.^j);
-    end
-end
-*/
-
-
-// TODO !!! COMPLETE THIS FUNCTION
 arma::mat mapFeature(arma::mat X1, arma::mat X2){
     arma::mat out(size(X1, 0), MAPPED_NUM);
 
@@ -37,7 +19,6 @@ arma::mat mapFeature(arma::mat X1, arma::mat X2){
             out.col(column++) = ( pow(X1, i-j) % pow(X2, j) );
         }
     }
-
 
     return out;
 }
@@ -51,7 +32,7 @@ arma::mat mapFeature(arma::mat X1, arma::mat X2){
  * @return a vector of size m x 1 representing the sigmoid function applied to each value of z
  */
 arma::mat sigmoid(arma::mat *theta, arma::mat *X, unsigned long m){
-    arma::mat z = *X * *theta;
+    arma::mat z = *theta * *X;
 
     arma::mat s(m, 1);
 
@@ -96,8 +77,8 @@ arma::mat predict(arma::mat *theta, arma::mat *X){
 arma::mat normalEquation(arma::mat *X, arma::mat *y){
     arma::mat X_transpose = X->t();
 
-    unsigned long m = arma::size(*X, 0);
-    arma::mat normalMatrix = arma::eye<arma::mat>(m, m);
+    unsigned long n = arma::size(*X, 1);
+    arma::mat normalMatrix = arma::eye<arma::mat>(n, n);
     normalMatrix(0, 0) = 0;
 
     return ( arma::pinv(X_transpose * *X + LAMBDA * normalMatrix) * X_transpose * *y );
@@ -127,37 +108,95 @@ arma::mat generateWeekOfX(){
 }
 
 
+
 /**
  *
  * @param lightId the id of a light to collect all data for, train theta, and predict a weeks worth of scheduling
  * @return a matrix representing a week of scheduling
  */
-arma::mat trainAndPredict(int lightId){
+arma::mat trainAndPredict(int lightId, int machineLearning){
+
+	// Data does not need to be randomized since we are using all of it
     arma::mat data = generateLightMatrix(lightId);
-    arma::mat y = data.col(2);
+	arma::mat x_predict = generateWeekOfX();
+
+    if(machineLearning){
+    	// train and predict and then schedule
+   		arma::mat y = data.col(2);
+    	arma::mat X = mapFeature(data.col(0), data.col(1));
+    	
+    	arma::mat theta = normalEquation(&X, &y);
+
+   		return predict(&theta, &x_predict);
+    } else {
+    	// predict based on most frequent for that day
+    	// arma::mat = 
+
+    	return x_predict;
+    }
+
+
+}
+
+
+double fscore(arma::mat *y_predicted, arma::mat *y_test){
+	double true_postive = 0;
+	double pred_positive = 0;
+	double actual_positive = 0;
+	for(int i = 0; i < arma::size((*y_predicted), 0); i++){
+		if((*y_predicted).at(i, 0) == 1){
+			if((*y_test).at(i, 0) == 1){
+				true_postive++;
+				actual_positive++;
+			}
+			pred_positive++;
+		} else if ((*y_test).at(i, 0) == 1){
+			actual_positive++;
+		}
+	}
+
+	if(actual_positive == 0 || true_postive == 0){
+		return 0;
+	}
+
+	double recall = true_postive / actual_positive;
+	double precision = true_postive / pred_positive;
+
+	return 2 * ( (precision * recall) / (precision + recall) );
+}
+
+int checkConfidence(int lightId){
+
+	arma::mat data = generateLightMatrix(lightId);
+
+	// Randomizing the data for training
+	data = arma::shuffle(data, 1);
+
+	// Dividing into train (70%) and test (30%) sets
+	int rowSize = arma::size(data, 0);
+    arma::mat y_train = data.col(2).rows(0, std::floor(rowSize * 0.7));
+    arma::mat y_test = data.col(2).rows(std::floor(rowSize * 0.7) + 1,  rowSize - 1);
+    
     arma::mat X = mapFeature(data.col(0), data.col(1));
+    arma::mat X_train = X.rows(0, std::floor(rowSize * 0.7));
+    arma::mat X_test = X.rows(std::floor(rowSize * 0.7) + 1,  rowSize - 1);
 
-//    arma::mat theta = normalEquation(&X, &y);
-//    arma::mat x_predict = generateWeekOfX();
-//    return predict(&theta, &x_predict);
+    // Training theta with the training set
+   	arma::mat theta = normalEquation(&X_train, &y_train);
+   
+   	// Predicting values for the test set
+    arma::mat predicted =  predict(&theta, &X_test);
 
-    return X;
+    // Checking how confidence we are
+    return fscore(&predicted, &y_test) > CERTAINTY_THRESHOLD;
 }
 
 
 int main(int argc, const char **argv) {
 
-    // arma::mat predictions = trainAndPredict(0);
-    arma::mat x1(10, 1);
-    arma::mat x2(10, 1);
-    for(int i = 1; i < 11; i++){
-        x1(i - 1, 0) = i;
-        x2(i - 1, 0) = i + 10;
-    }
 
-    arma::mat mapped = mapFeature(x1, x2);
-    std::cout << arma::size(mapped) << "\n";
-    std::cout << mapped.row(0) << "\n";
+    int checked = checkConfidence(1);
+
 
     return 0;
 }
